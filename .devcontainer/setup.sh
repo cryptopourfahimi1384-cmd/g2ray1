@@ -1,16 +1,13 @@
-FROM debian:bookworm-slim
-COPY setup.sh /tmp/setup.sh
-COPY config.json /etc/xray/g2ray.json
-COPY show-link.sh /usr/local/bin/show-link.sh
-COPY start.sh /usr/local/bin/start.sh
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       bash curl wget unzip ca-certificates openssl uuid-runtime \
-    && rm -rf /var/lib/apt/lists/* \
-    && chmod +x /tmp/setup.sh \
-    && /tmp/setup.sh \
-    && rm /tmp/setup.sh \
-    && chmod +x /usr/local/bin/show-link.sh \
-    && chmod +x /usr/local/bin/start.sh
-EXPOSE 443
-CMD ["/usr/local/bin/xray","run","-c","/etc/xray/g2ray.json"]
+#!/bin/sh
+set -e
+RELEASE="https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-linux-64.zip"
+TMPDIR="$(mktemp -d)"
+echo "[g2ray] Downloading Xray v26.3.27..."
+curl -sL "$RELEASE" -o "$TMPDIR/xray.zip"
+unzip -q "$TMPDIR/xray.zip" -d "$TMPDIR"
+install -m 755 "$TMPDIR/xray" /usr/local/bin/xray
+echo "[g2ray] Downloading GeoIP and GeoSite..."
+curl -sL "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat" -o /usr/local/bin/geoip.dat
+curl -sL "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat" -o /usr/local/bin/geosite.dat
+rm -rf "$TMPDIR"
+echo "[g2ray] Done."
